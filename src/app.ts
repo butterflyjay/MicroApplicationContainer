@@ -1,7 +1,8 @@
+import SandBox from "./sandbox";
 import loadHtml from "./source";
 import { AppSourceMap, AppStatus, CreateAppType, MicroApp } from "./types";
-
 export default class CreateApp {
+  public sandBox: SandBox;
   public loadCount: number = 0;
   public name: string;
   public entry: string;
@@ -18,6 +19,7 @@ export default class CreateApp {
     this.entry = entry; // 应用地址
     this.container = container; //应用容器
     this.status = AppStatus.LOADING;
+    this.sandBox = new SandBox(name);
     loadHtml(this);
   }
   /**
@@ -45,10 +47,11 @@ export default class CreateApp {
     });
     //将格式化后的DOM结构插入到容器中
     this.container!.appendChild(fragment);
+    this.sandBox.active();
     //执行js
     this.source.scripts.forEach(info => {
       try {
-        (0, eval)(info.code);
+        (0, eval)(this.sandBox.bindScope(info.code));
       } catch (error) {
         console.error("微应用执行js代码错误!", error);
       }
@@ -65,6 +68,8 @@ export default class CreateApp {
     this.status = AppStatus.UNMOUNT;
     //清空容器
     this.container = null;
+    //关闭沙箱
+    this.sandBox.inActive();
     //destory为true，则删除应用
     if (destory) {
       appInstanceMap.delete(this.name);
