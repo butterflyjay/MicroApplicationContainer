@@ -1,6 +1,6 @@
 import SandBox from "./sandbox";
 import loadHtml from "./source";
-import { AppSourceMap, AppStatus, CreateAppType, MicroApp } from "./types";
+import { AppSourceMap, AppStatus, CreateAppType, MicroApp } from "@MicroWebTypes";
 export default class CreateApp {
   public sandBox: SandBox;
   public loadCount: number = 0;
@@ -47,6 +47,7 @@ export default class CreateApp {
     });
     //将格式化后的DOM结构插入到容器中
     this.container!.appendChild(fragment);
+    //激活沙箱
     this.sandBox.active();
     //执行js
     this.source.scripts.forEach(info => {

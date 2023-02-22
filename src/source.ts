@@ -1,4 +1,4 @@
-import { MicroApp } from "./types";
+import { MicroApp } from "@MicroWebTypes";
 import { fetchSource } from "./utils";
 
 /**

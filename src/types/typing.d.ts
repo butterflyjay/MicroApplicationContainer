@@ -10,4 +10,35 @@ declare module "@MicroWebTypes" {
     addEventListener?(type: string, handler: Function, useCapture?: boolean): void;
     removeEventListener?(type: string, handler: Function, useCapture?: boolean): void;
   }
+  interface CreateAppType {
+    name: string;
+    entry: string;
+    container: Element;
+  }
+  interface AppSourceMap {
+    links: Map<string, AppSourceMapValue>;
+    scripts: Map<string, AppSourceMapValue>;
+    html: Element | null;
+  }
+  interface MicroApp {
+    name: string;
+    entry: string;
+    container: Element | null;
+    status: string;
+    source: AppSourceMap;
+    onLoad(dom: Element): void;
+    unmount(isDestory: boolean): void;
+  }
+
+  type AppSourceMapValue = {
+    code: string;
+    isExternal?: boolean;
+  };
+
+  enum AppStatus {
+    CREATED = "CREATED",
+    MOUNTED = "MOUNTED",
+    UNMOUNT = "UNMOUNT",
+    LOADING = "LOADING",
+  }
 }

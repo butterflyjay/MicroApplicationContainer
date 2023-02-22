@@ -1,26 +1,28 @@
 import { Window } from "@MicroWebTypes";
 export default class SandBox {
   public isActive: boolean = false; //沙箱激活状态
-  public fakeWindow: Window = {}; //被代理的对象
+  public fakeWindow: object = Object.create(null); //被代理的对象
   public newAddedProps: Set<string | symbol> = new Set(); //新添加的属性，在卸载时清空
-  public proxyWindow: object = {};
+  public proxyWindow: object;
   public releaseEffect: Function;
+  public appName: string;
   constructor(appName: string) {
+    this.appName = appName;
     //卸载钩子
     this.releaseEffect = effect(this.fakeWindow);
     this.proxyWindow = new Proxy(this.fakeWindow, {
       get: (target, prop, receiver) => {
         //防止window.window逃逸，类似的还有window.self之类的API
         //需要特别注意一些边界case
-        if (prop === "window") {
-          return target;
+        if (prop in ["0", "1", "self", "window"]) {
+          return receiver;
         }
         //优先从代理对象上取值
-        if (Reflect.has(target, prop)) {
-          return Reflect.get(target, prop, receiver);
+        if (Object.prototype.hasOwnProperty.call(target, prop)) {
+          return Reflect.get(target, prop);
         }
         //否则从原生window对象上取值
-        const value: any = Reflect.get(window, prop, receiver);
+        const value: any = Reflect.get(window, prop);
         //如果兜底的值为函数，则需要绑定window对象，如: console、alert等
         if (typeof value === "function") {
           const valueStr = value.toString();
@@ -32,17 +34,17 @@ export default class SandBox {
         //其他情况直接返回
         return value;
       },
-      set: (target, prop, nVal, receiver) => {
+      set: (target, prop, newVal) => {
         if (this.isActive) {
-          Reflect.set(target, prop, nVal, receiver);
+          Reflect.set(target, prop, newVal);
           //记录添加的变量，用于后续清空操作
           this.newAddedProps.add(prop);
         }
         return true;
       },
       deleteProperty: (target, prop) => {
-        //当前key存在于代理对象上时才满足删除条件
-        if (target.hasOwnProperty(prop)) {
+        //当前prop存在于代理对象上时才满足删除条件
+        if (Object.prototype.hasOwnProperty.call(target, prop)) {
           return Reflect.deleteProperty(target, prop);
         }
         return true;
@@ -52,15 +54,18 @@ export default class SandBox {
   /**
    * 激活沙箱
    */
-  public active() {
-    if (!this.isActive) {
-      this.isActive = true;
+  public active(): void {
+    if (this.isActive) {
+      return console.warn(
+        `[microApp ${this.appName}]: The sandbox is Running, please do not open it repeatedly!`
+      );
     }
+    this.isActive = false;
   }
   /**
    * 关闭沙箱
    */
-  public inActive() {
+  public inActive(): void {
     if (this.isActive) {
       this.isActive = false;
       //清空变量
