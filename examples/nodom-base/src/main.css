@@ -1,0 +1,34 @@
+.ui-layout-north {
+  height: 60px;
+  background-color: dimgray;
+  font-size: 25px;
+  color: white;
+  text-align: center;
+  line-height: 60px;
+}
+.ui-layout-body {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+}
+.ui-layout-west {
+  height: 100%;
+  width: 150px;
+  display: flex;
+  flex-direction: column;
+  background-color: rgb(154, 163, 163);
+}
+.ui-layout-east {
+  flex: 1;
+}
+.ui-vue,
+.ui-react {
+  color: white;
+  font-size: 20px;
+  text-align: center;
+  height: 40px;
+  line-height: 40px;
+  margin-bottom: 10px;
+  background-color: rgb(54, 61, 59);
+  cursor: pointer;
+}

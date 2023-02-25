@@ -1,3 +1,138 @@
+class SandBox {
+    constructor(appName) {
+        this.isActive = false; //沙箱激活状态
+        this.fakeWindow = Object.create(null); //被代理的对象
+        this.newAddedProps = new Set(); //新添加的属性，在卸载时清空
+        this.appName = appName;
+        //卸载钩子
+        this.releaseEffect = effect(this.fakeWindow);
+        this.proxyWindow = new Proxy(this.fakeWindow, {
+            get: (target, prop, receiver) => {
+                //防止window.window逃逸，类似的还有window.self之类的API
+                //需要特别注意一些边界case
+                if (prop in ["0", "1", "self", "window"]) {
+                    return receiver;
+                }
+                //优先从代理对象上取值
+                if (Object.prototype.hasOwnProperty.call(target, prop)) {
+                    return Reflect.get(target, prop);
+                }
+                //否则从原生window对象上取值
+                const value = Reflect.get(window, prop);
+                //如果兜底的值为函数，则需要绑定window对象，如: console、alert等
+                if (typeof value === "function") {
+                    const valueStr = value.toString();
+                    //排除构造函数
+                    if (!/^function\s+[A-Z]/.test(valueStr) && !/^class\s+/.test(valueStr)) {
+                        return value.bind(window);
+                    }
+                }
+                //其他情况直接返回
+                return value;
+            },
+            set: (target, prop, newVal) => {
+                if (this.isActive) {
+                    Reflect.set(target, prop, newVal);
+                    //记录添加的变量，用于后续清空操作
+                    this.newAddedProps.add(prop);
+                }
+                return true;
+            },
+            deleteProperty: (target, prop) => {
+                //当前prop存在于代理对象上时才满足删除条件
+                if (Object.prototype.hasOwnProperty.call(target, prop)) {
+                    return Reflect.deleteProperty(target, prop);
+                }
+                return true;
+            },
+        });
+    }
+    /**
+     * 激活沙箱
+     */
+    active() {
+        if (this.isActive) {
+            return console.warn(`[microApp ${this.appName}]: The sandbox is Running, please do not open it repeatedly!`);
+        }
+        this.isActive = false;
+    }
+    /**
+     * 关闭沙箱
+     */
+    inActive() {
+        if (this.isActive) {
+            this.isActive = false;
+            //清空变量
+            this.newAddedProps.forEach(prop => {
+                Reflect.deleteProperty(this.fakeWindow, prop);
+            });
+            this.newAddedProps.clear();
+            //卸载全局事件
+            this.releaseEffect();
+        }
+    }
+    /**
+     * 修改js作用域
+     * @param code 代码
+     */
+    bindScope(code) {
+        window.proxyWindow = this.proxyWindow;
+        return `;(function(window, self){with(window){;${code}\n}}).call(window.proxyWindow, window.proxyWindow, window.proxyWindow);`;
+    }
+}
+//记录addEventListener、removeEventListener原生方法
+const rawWindowAddEventListener = window.addEventListener;
+const rawWindowRemoveEventListener = window.removeEventListener;
+/**
+ * 重写全局事件的监听和解绑
+ * @param fakeWindow
+ */
+function effect(fakeWindow) {
+    const eventListenerMap = new Map();
+    //重写addEventListener
+    fakeWindow.addEventListener = function (type, handler, useCapture) {
+        const listenerList = eventListenerMap.get(type);
+        //当前事件非第一次监听，则添加缓存
+        if (listenerList) {
+            listenerList.add(handler);
+        }
+        else {
+            //当前第一次监听，初始化数据
+            eventListenerMap.set(type, new Set([handler]));
+        }
+        //执行原生监听函数
+        return rawWindowAddEventListener.call(window, type, handler, useCapture);
+    };
+    //重写removeEventListener
+    fakeWindow.removeEventListener = function (type, handler, useCapture) {
+        const listenerList = eventListenerMap.get(type);
+        if ((listenerList === null || listenerList === void 0 ? void 0 : listenerList.size) && listenerList.has(handler)) {
+            listenerList.delete(handler);
+        }
+        //执行原生解绑函数
+        return rawWindowRemoveEventListener.call(window, type, handler, useCapture);
+    };
+    // 清空残余事件
+    return () => {
+        console.log("需要卸载的全局事件", eventListenerMap);
+        //清空window绑定事件
+        if (eventListenerMap.size) {
+            // 将残余的没有解绑的函数依次解绑
+            eventListenerMap.forEach((listenerList, type) => {
+                if (listenerList.size) {
+                    for (const handler of listenerList) {
+                        rawWindowRemoveEventListener.call(window, type, handler);
+                    }
+                }
+            });
+            eventListenerMap.clear();
+        }
+    };
+}
+
+/**
+ * 是否为浏览器环境
+ */
 /**
  * 获取静态资源
  * @param {string} entry 静态资源地址
@@ -156,6 +291,11 @@ function fetchScriptsFromHtml(app, htmlDom) {
     });
 }
 
+//TypeScript声明文件(.d.ts)的使用
+//使用场景
+//1.在ts文件中对引用的外部库做类型判断；
+//2.制作npm包时，书写自己的声明文件，需要在package.json的typing/types字段注册声明文件的路径；
+//3.不使用ts时，也可以添加声明文件与（自己的）的模块存放在同一目录下，简单做一下数据结构体，对IDE参数声明也有用哦；
 var AppStatus;
 (function (AppStatus) {
     AppStatus["CREATED"] = "CREATED";
@@ -163,7 +303,6 @@ var AppStatus;
     AppStatus["UNMOUNT"] = "UNMOUNT";
     AppStatus["LOADING"] = "LOADING";
 })(AppStatus || (AppStatus = {}));
-//created/loading/mount/unmount
 
 class CreateApp {
     constructor({ name, entry, container }) {
@@ -178,6 +317,7 @@ class CreateApp {
         this.entry = entry; // 应用地址
         this.container = container; //应用容器
         this.status = AppStatus.LOADING;
+        this.sandBox = new SandBox(name);
         loadHtml(this);
     }
     /**
@@ -206,10 +346,12 @@ class CreateApp {
         });
         //将格式化后的DOM结构插入到容器中
         this.container.appendChild(fragment);
+        //激活沙箱
+        this.sandBox.active();
         //执行js
         this.source.scripts.forEach(info => {
             try {
-                (0, eval)(info.code);
+                (0, eval)(this.sandBox.bindScope(info.code));
             }
             catch (error) {
                 console.error("微应用执行js代码错误!", error);
@@ -227,6 +369,8 @@ class CreateApp {
         this.status = AppStatus.UNMOUNT;
         //清空容器
         this.container = null;
+        //关闭沙箱
+        this.sandBox.inActive();
         //destory为true，则删除应用
         if (destory) {
             appInstanceMap.delete(this.name);
@@ -250,7 +394,11 @@ class MicroElement extends HTMLElement {
     connectedCallback() {
         console.log("micro-app is connected");
         //创建微应用实例
-        const app = new CreateApp({ name: this.appName, entry: this.appEntry, container: this });
+        const app = new CreateApp({
+            name: this.appName,
+            entry: this.appEntry,
+            container: this,
+        });
         //记入缓存，用于后续功能
         appInstanceMap.set(this.appName, app);
     }

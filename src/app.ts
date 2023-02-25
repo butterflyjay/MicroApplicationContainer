@@ -1,6 +1,6 @@
 import SandBox from "./sandbox";
 import loadHtml from "./source";
-import { AppSourceMap, AppStatus, CreateAppType, MicroApp } from "@MicroWebTypes";
+import { AppSourceMap, AppStatus, CreateAppType, MicroApp } from "./types/types";
 export default class CreateApp {
   public sandBox: SandBox;
   public loadCount: number = 0;

@@ -1,4 +1,4 @@
-import { Window } from "@MicroWebTypes";
+import { Window } from "./types/types";
 export default class SandBox {
   public isActive: boolean = false; //沙箱激活状态
   public fakeWindow: object = Object.create(null); //被代理的对象
@@ -100,7 +100,7 @@ function effect(fakeWindow: Window) {
     type: string,
     handler: Function,
     useCapture?: boolean
-  ) {
+  ): void {
     const listenerList = eventListenerMap.get(type);
     //当前事件非第一次监听，则添加缓存
     if (listenerList) {
@@ -118,7 +118,7 @@ function effect(fakeWindow: Window) {
     type: string,
     handler: Function,
     useCapture?: boolean
-  ) {
+  ): void {
     const listenerList = eventListenerMap.get(type);
     if (listenerList?.size && listenerList.has(handler)) {
       listenerList.delete(handler);

@@ -1,20 +1,24 @@
 import CreateApp, { appInstanceMap } from "./app";
 class MicroElement extends HTMLElement {
+  public appName: string = "";
+  public appEntry: string = "";
   static get observedAttributes() {
     return ["name", "entry"];
   }
   constructor() {
     super();
   }
-  public appName: string = "";
-  public appEntry: string = "";
   /**
    * 自定义元素被插入到DOM时执行，此时去加载子应用的静态资源并渲染
    */
   public connectedCallback() {
     console.log("micro-app is connected");
     //创建微应用实例
-    const app = new CreateApp({ name: this.appName, entry: this.appEntry, container: this });
+    const app = new CreateApp({
+      name: this.appName,
+      entry: this.appEntry,
+      container: this,
+    });
     //记入缓存，用于后续功能
     appInstanceMap.set(this.appName, app);
   }
