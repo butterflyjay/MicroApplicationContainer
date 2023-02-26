@@ -1,4 +1,4 @@
-import { Module } from "../../static/js/nodomui.js";
+import { Module } from "../static/js/nodomui.js";
 
 export default class React extends Module {
   template() {

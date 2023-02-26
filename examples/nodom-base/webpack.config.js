@@ -8,11 +8,11 @@ module.exports = {
     filename: "main.js",
     path: path.resolve(__dirname, "./dist")
   },
-  plugins: [
-    new HtmlWebpackPlugin({
-      template: path.resolve(__dirname, "./src/index.html")
-    })
-  ],
+  // plugins: [
+  //   new HtmlWebpackPlugin({
+  //     template: path.resolve(__dirname, "./src/index.html")
+  //   })
+  // ],
   module: {
     rules: [
       {
@@ -32,7 +32,8 @@ module.exports = {
     host: "localhost",
     port: "8080",
     open: true,
-    hot: true
+    hot: true,
+    static: path.resolve(__dirname, "src"),
   },
   resolve: {
     extensions: [".js", "*", ".css"]

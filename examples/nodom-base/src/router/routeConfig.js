@@ -1,4 +1,4 @@
-import { createRoute } from "../../static/js/nodomui";
+import { createRoute } from "../static/js/nodomui";
 import React from "./react.js";
 import Vue3 from "./vue3.js";
 
