@@ -9,8 +9,8 @@
   },
   "scripts": {
     "base:nodom": "cd examples/nodom-base && npm run dev",
-    "childvue:vue3": "cd examples/vue3-child && npm run dev",
-    "childreact:react": "cd examples/react-child && npm start",
+    "child:vue3": "cd examples/vue3-child && npm run dev",
+    "child:react": "cd examples/react-child && npm start",
     "build": "rollup --config",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

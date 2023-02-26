@@ -1,3 +1,4 @@
+import scopedCss from "./scopedcss";
 import { MicroApp } from "./types/types";
 import { fetchSource } from "./utils";
 
@@ -88,6 +89,7 @@ export function extractSourceDom(parent: Element, app: MicroApp) {
       parent.removeChild(dom);
     } else if (dom instanceof HTMLStyleElement) {
       //进行样式隔离
+      scopedCss(dom, app.name);
     }
   }
 }
@@ -115,6 +117,7 @@ export function fetchLinksFromHtml(
         //拿到css资源后放入style元素并插入到microweb-head中
         const linkSheetStyle = document.createElement("style");
         linkSheetStyle.textContent = code;
+        scopedCss(linkSheetStyle, app.name);
         microWebHead?.appendChild(linkSheetStyle);
         //将代码放入缓存，再次渲染时可以从缓存中获取
         linkEntries[i][1].code = code;

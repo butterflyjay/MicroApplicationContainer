@@ -130,9 +130,115 @@ function effect(fakeWindow) {
     };
 }
 
+//模板style
+let templateStyle;
+function scopedCss(styleElement, appName) {
+    var _a, _b;
+    //前缀
+    const prefix = `micro-web[name=${appName}]`;
+    //初始化时创建模板标签
+    if (!templateStyle) {
+        templateStyle = document.createElement("style");
+        document.body.appendChild(templateStyle);
+        // 设置样式表无效，防止对应用造成影响
+        templateStyle.sheet.disabled = true;
+    }
+    if (styleElement.textContent) {
+        //将元素的内容赋值给模板元素
+        templateStyle.textContent = styleElement.textContent;
+        //格式化规则，并将格式化后的规则赋值给style元素   (??空值合并运算符)
+        styleElement.textContent = scopedRule(Array.from((_b = (_a = templateStyle.sheet) === null || _a === void 0 ? void 0 : _a.cssRules) !== null && _b !== void 0 ? _b : []), prefix);
+        //清空模板style内容
+        templateStyle.textContent = "";
+    }
+    else {
+        //监听动态添加内容的style元素
+        const observer = new MutationObserver(function () {
+            var _a, _b;
+            //断开监听
+            observer.disconnect();
+            //格式化规则，并将格式化后的规则赋值给style元素
+            styleElement.textContent = scopedRule(Array.from((_b = (_a = styleElement.sheet) === null || _a === void 0 ? void 0 : _a.cssRules) !== null && _b !== void 0 ? _b : []), prefix);
+        });
+        //监听style元素的内容是否变化
+        observer.observe(styleElement, { childList: true });
+    }
+}
+/**
+ * 依次处理每个cssRule
+ * @param rules cssRule
+ * @param prefix prefix 前缀
+ * @returns
+ */
+function scopedRule(rules, prefix) {
+    let result = "";
+    //遍历rules，处理每一条规则
+    for (const rule of rules) {
+        //rule.type已不被推荐, 推荐使用rule.constructor.name
+        switch (rule.type) {
+            case 1:
+                result += scopedStyleRule(rule, prefix);
+                break;
+            case 4:
+                result += scopedPackRule(rule, prefix, "media");
+                break;
+            case 12:
+                result += scopedPackRule(rule, prefix, "supports");
+                break;
+            default:
+                result += rule.cssText;
+                break;
+        }
+    }
+    return result;
+}
+/**
+ * 处理media 和 supports
+ * @param { CSSMediaRule } rule 媒体规则
+ * @param prefix 前缀
+ * @param packName
+ * @returns
+ */
+function scopedPackRule(rule, prefix, packName) {
+    //递归执行scopedRule，处理media 和 supports内部规则
+    const result = scopedRule(Array.from(rule.cssRules), prefix);
+    return `@${packName} ${rule.conditionText} {${result}}`;
+}
+/**
+ * 修改CSS规则，添加前缀
+ * @param {CSSRule} rule CSS规则
+ * @param {string} prefix 前缀
+ */
+function scopedStyleRule(rule, prefix) {
+    // 获取CSS规则对象的选择和内容
+    const { selectorText, cssText } = rule;
+    // 处理顶层选择器，如 body，html 都转换为 micro-app[name=xxx]
+    if (/^((html[\s>~,]+body)|(html|body|:root))$/.test(selectorText)) {
+        return cssText.replace(/^((html[\s>~,]+body)|(html|body|:root))/, prefix);
+    }
+    else if (selectorText === "*") {
+        // 选择器 * 替换为 micro-app[name=xxx] *
+        return cssText.replace("*", `${prefix} *`);
+    }
+    const builtInRootSelectorRE = /(^|\s+)((html[\s>~]+body)|(html|body|:root))(?=[\s>~]+|$)/;
+    // 匹配查询选择器
+    return cssText.replace(/^[\s\S]+{/, selectors => {
+        return selectors.replace(/(^|,)([^,]+)/g, (all, $1, $2) => {
+            // 如果含有顶层选择器，需要单独处理
+            if (builtInRootSelectorRE.test($2)) {
+                // body[name=xx]|body.xx|body#xx 等都不需要转换
+                return all.replace(builtInRootSelectorRE, prefix);
+            }
+            // 在选择器前加上前缀
+            return `${$1} ${prefix} ${$2.replace(/^\s*/, "")}`;
+        });
+    });
+}
+
 /**
  * 是否为浏览器环境
  */
+const isBrowser = typeof window !== "undefined";
 /**
  * 获取静态资源
  * @param {string} entry 静态资源地址
@@ -273,7 +379,10 @@ function extractSourceDom(parent, app) {
             }
             parent.removeChild(dom);
         }
-        else ;
+        else if (dom instanceof HTMLStyleElement) {
+            //进行样式隔离
+            scopedCss(dom, app.name);
+        }
     }
 }
 /**
@@ -296,6 +405,7 @@ function fetchLinksFromHtml(app, microWebHead, htmlDom) {
             //拿到css资源后放入style元素并插入到microweb-head中
             const linkSheetStyle = document.createElement("style");
             linkSheetStyle.textContent = code;
+            scopedCss(linkSheetStyle, app.name);
             microWebHead === null || microWebHead === void 0 ? void 0 : microWebHead.appendChild(linkSheetStyle);
             //将代码放入缓存，再次渲染时可以从缓存中获取
             linkEntries[i][1].code = code;
@@ -490,6 +600,10 @@ function defineElement() {
 
 const MicroWeb = {
     start() {
+        if (!isBrowser) {
+            console.error("The environment is not support MicroWeb!");
+            return;
+        }
         defineElement();
     },
 };
