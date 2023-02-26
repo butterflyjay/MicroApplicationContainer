@@ -1,7 +1,8 @@
 import SandBox from "./sandbox";
 import loadHtml from "./source";
-import { AppSourceMap, AppStatus, CreateAppType, MicroApp } from "./types/types";
+import { AppSourceMap, AppStatus, CreateAppType, MicroApp, UrlType } from "./types/types";
 export default class CreateApp {
+  public url: UrlType;
   public sandBox: SandBox;
   public loadCount: number = 0;
   public name: string;
@@ -14,13 +15,14 @@ export default class CreateApp {
     html: null,
   };
 
-  constructor({ name, entry, container }: CreateAppType) {
+  constructor({ name, entry, container, url }: CreateAppType) {
     this.name = name; // 应用名称
     this.entry = entry; // 应用地址
     this.container = container; //应用容器
     this.status = AppStatus.LOADING;
-    this.sandBox = new SandBox(name);
+    this.url = url;
     loadHtml(this);
+    this.sandBox = new SandBox(name);
   }
   /**
    * 资源加载完时执行
@@ -52,7 +54,8 @@ export default class CreateApp {
     //执行js
     this.source.scripts.forEach(info => {
       try {
-        (0, eval)(this.sandBox.bindScope(info.code));
+        // (0, eval)(this.sandBox.bindScope(info.code));
+        (new Function(this.sandBox.bindScope(info.code)))()
       } catch (error) {
         console.error("微应用执行js代码错误!", error);
       }

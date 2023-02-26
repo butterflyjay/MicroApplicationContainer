@@ -143,6 +143,45 @@ function fetchSource(entry) {
         return res.text();
     });
 }
+/**
+ * 判断目标是否为字符串
+ * @param target 目标
+ * @returns {boolean}
+ */
+function isString(target) {
+    return typeof target === "string";
+}
+/**
+ * 给地址添加协议
+ * @param entry 地址
+ * @returns 添加协议的地址
+ */
+function addProtocol(entry) {
+    return entry.startsWith("//") ? `${globalThis.location.protocol}${entry}` : entry;
+}
+/**
+ * 解析，构造，规范化和编码
+ * @param entry 地址
+ * @returns URL
+ */
+function createUrl(entry) {
+    return new URL(entry);
+}
+function formatEntry(entry, el) {
+    if (!isString(entry) || !entry)
+        return "";
+    try {
+        //origin: 包含协议名、域名和端口号 pathname：以"/"起头紧跟着URL文件路径 search：指示URL的参数字符串
+        const { origin, pathname, search } = createUrl(addProtocol(entry));
+        console.log(origin, pathname, search);
+        el.url = { origin, pathname, search };
+        return `${origin}${pathname}${search}`;
+    }
+    catch (e) {
+        console.error(e, el.appName);
+        return "";
+    }
+}
 
 /**
  * 访问微应用资源
@@ -154,11 +193,15 @@ function loadHtml(app) {
         html = html
             .replace(/<head[^>]*>[\s\S]*?<\/head>/i, match => {
             // 将head标签替换为micro-app-head，因为web页面只允许有一个head标签
-            return match.replace(/<head/i, "<microweb-head").replace(/<\/head>/i, "</microweb-head>");
+            return match
+                .replace(/<head/i, "<microweb-head")
+                .replace(/<\/head>/i, "</microweb-head>");
         })
             .replace(/<body[^>]*>[\s\S]*?<\/body>/i, match => {
             // 将body标签替换为micro-app-body，防止与基座应用的body标签重复导致的问题。
-            return match.replace(/<body/i, "<microweb-body").replace(/<\/body>/i, "</microweb-body>");
+            return match
+                .replace(/<body/i, "<microweb-body")
+                .replace(/<\/body>/i, "</microweb-body>");
         });
         // 将html字符串转化为DOM结构
         const htmlDom = document.createElement("div");
@@ -244,7 +287,7 @@ function fetchLinksFromHtml(app, microWebHead, htmlDom) {
     //通过fetch请求所有css资源
     const fetchLinkPromise = [];
     for (const [url] of linkEntries) {
-        fetchLinkPromise.push(fetchSource(url));
+        fetchLinkPromise.push(fetchSource(app.url.origin + url));
     }
     Promise.all(fetchLinkPromise)
         .then(res => {
@@ -275,7 +318,7 @@ function fetchScriptsFromHtml(app, htmlDom) {
     const fetchScriptPromise = [];
     for (const [url, info] of scriptEntries) {
         //如果是内联script，则不需要请求资源
-        fetchScriptPromise.push(info.isExternal ? fetchSource(url) : Promise.resolve(info.code));
+        fetchScriptPromise.push(info.isExternal ? fetchSource(app.url.origin + url) : Promise.resolve(info.code));
     }
     Promise.all(fetchScriptPromise)
         .then(res => {
@@ -305,7 +348,7 @@ var AppStatus;
 })(AppStatus || (AppStatus = {}));
 
 class CreateApp {
-    constructor({ name, entry, container }) {
+    constructor({ name, entry, container, url }) {
         this.loadCount = 0;
         this.status = AppStatus.CREATED; // 组件状态，包括created/loading/mounted/unmount
         this.source = {
@@ -317,8 +360,9 @@ class CreateApp {
         this.entry = entry; // 应用地址
         this.container = container; //应用容器
         this.status = AppStatus.LOADING;
-        this.sandBox = new SandBox(name);
+        this.url = url;
         loadHtml(this);
+        this.sandBox = new SandBox(name);
     }
     /**
      * 资源加载完时执行
@@ -351,7 +395,8 @@ class CreateApp {
         //执行js
         this.source.scripts.forEach(info => {
             try {
-                (0, eval)(this.sandBox.bindScope(info.code));
+                // (0, eval)(this.sandBox.bindScope(info.code));
+                (new Function(this.sandBox.bindScope(info.code)))();
             }
             catch (error) {
                 console.error("微应用执行js代码错误!", error);
@@ -379,12 +424,14 @@ class CreateApp {
 }
 const appInstanceMap = new Map();
 
+//自定义微元素组件
 class MicroElement extends HTMLElement {
     static get observedAttributes() {
         return ["name", "entry"];
     }
     constructor() {
         super();
+        this.url = { origin: "", pathname: "", search: "" };
         this.appName = "";
         this.appEntry = "";
     }
@@ -398,6 +445,7 @@ class MicroElement extends HTMLElement {
             name: this.appName,
             entry: this.appEntry,
             container: this,
+            url: this.url,
         });
         //记入缓存，用于后续功能
         appInstanceMap.set(this.appName, app);
@@ -425,6 +473,7 @@ class MicroElement extends HTMLElement {
         }
         else if (attr === "entry" && !this.appEntry && newVal) {
             this.appEntry = newVal;
+            formatEntry(newVal, this);
         }
     }
 }

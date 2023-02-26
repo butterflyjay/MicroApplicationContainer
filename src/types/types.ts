@@ -13,6 +13,7 @@ export interface CreateAppType {
   name: string;
   entry: string;
   container: Element;
+  url: UrlType;
 }
 export interface AppSourceMap {
   links: Map<string, AppSourceMapValue>;
@@ -20,6 +21,7 @@ export interface AppSourceMap {
   html: Element | null;
 }
 export interface MicroApp {
+  url: UrlType;
   name: string;
   entry: string;
   container: Element | null;
@@ -27,6 +29,12 @@ export interface MicroApp {
   source: AppSourceMap;
   onLoad(dom: Element): void;
   unmount(isDestory: boolean): void;
+}
+
+export interface UrlType {
+  origin: string;
+  pathname: string;
+  search: string;
 }
 
 export type AppSourceMapValue = {

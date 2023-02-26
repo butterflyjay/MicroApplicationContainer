@@ -11,11 +11,15 @@ export default function loadHtml(app: MicroApp) {
       html = html
         .replace(/<head[^>]*>[\s\S]*?<\/head>/i, match => {
           // 将head标签替换为micro-app-head，因为web页面只允许有一个head标签
-          return match.replace(/<head/i, "<microweb-head").replace(/<\/head>/i, "</microweb-head>");
+          return match
+            .replace(/<head/i, "<microweb-head")
+            .replace(/<\/head>/i, "</microweb-head>");
         })
         .replace(/<body[^>]*>[\s\S]*?<\/body>/i, match => {
           // 将body标签替换为micro-app-body，防止与基座应用的body标签重复导致的问题。
-          return match.replace(/<body/i, "<microweb-body").replace(/<\/body>/i, "</microweb-body>");
+          return match
+            .replace(/<body/i, "<microweb-body")
+            .replace(/<\/body>/i, "</microweb-body>");
         });
       // 将html字符串转化为DOM结构
       const htmlDom = document.createElement("div");
@@ -102,7 +106,7 @@ export function fetchLinksFromHtml(
   //通过fetch请求所有css资源
   const fetchLinkPromise: Array<Promise<string>> = [];
   for (const [url] of linkEntries) {
-    fetchLinkPromise.push(fetchSource(url));
+    fetchLinkPromise.push(fetchSource(app.url.origin + url));
   }
   Promise.all(fetchLinkPromise)
     .then(res => {
@@ -133,7 +137,9 @@ export function fetchScriptsFromHtml(app: MicroApp, htmlDom: Element): void {
   const fetchScriptPromise: Array<Promise<string>> = [];
   for (const [url, info] of scriptEntries) {
     //如果是内联script，则不需要请求资源
-    fetchScriptPromise.push(info.isExternal ? fetchSource(url) : Promise.resolve(info.code));
+    fetchScriptPromise.push(
+      info.isExternal ? fetchSource(app.url.origin + url) : Promise.resolve(info.code)
+    );
   }
   Promise.all(fetchScriptPromise)
     .then(res => {

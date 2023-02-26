@@ -118,7 +118,7 @@ function effect(fakeWindow: Window) {
     type: string,
     handler: Function,
     useCapture?: boolean
-  ): void {
+  ):void {
     const listenerList = eventListenerMap.get(type);
     if (listenerList?.size && listenerList.has(handler)) {
       listenerList.delete(handler);

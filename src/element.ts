@@ -1,5 +1,9 @@
 import CreateApp, { appInstanceMap } from "./app";
-class MicroElement extends HTMLElement {
+import { UrlType } from "./types/types";
+import { formatEntry } from "./utils";
+//自定义微元素组件
+export class MicroElement extends HTMLElement {
+  public url: UrlType = { origin: "", pathname: "", search: "" };
   public appName: string = "";
   public appEntry: string = "";
   static get observedAttributes() {
@@ -18,6 +22,7 @@ class MicroElement extends HTMLElement {
       name: this.appName,
       entry: this.appEntry,
       container: this,
+      url: this.url,
     });
     //记入缓存，用于后续功能
     appInstanceMap.set(this.appName, app);
@@ -44,6 +49,7 @@ class MicroElement extends HTMLElement {
       this.appName = newVal;
     } else if (attr === "entry" && !this.appEntry && newVal) {
       this.appEntry = newVal;
+      formatEntry(newVal, this);
     }
   }
 }
