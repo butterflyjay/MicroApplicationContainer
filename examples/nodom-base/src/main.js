@@ -2,7 +2,7 @@
 // import "../static/css/nodomui.css";
 import { nodom, Module } from "./static/js/nodomui.js";
 import { initRoute } from "./router/routeConfig.js";
-import MicroWeb from "../../src/microweb.js";
+import MicroWeb from "../../dist/microweb.js";
 
 MicroWeb.start();
 

@@ -132,6 +132,11 @@ function effect(fakeWindow) {
 
 //模板style
 let templateStyle;
+/**
+ * 进行样式隔离
+ * @param { HTMLStyleElement } styleElement style元素
+ * @param appName 应用名称
+ */
 function scopedCss(styleElement, appName) {
     var _a, _b;
     //前缀
@@ -223,6 +228,7 @@ function scopedStyleRule(rule, prefix) {
     const builtInRootSelectorRE = /(^|\s+)((html[\s>~]+body)|(html|body|:root))(?=[\s>~]+|$)/;
     // 匹配查询选择器
     return cssText.replace(/^[\s\S]+{/, selectors => {
+        //[^,]匹配除","以外所有字符，(^|,))匹配开头或者","
         return selectors.replace(/(^|,)([^,]+)/g, (all, $1, $2) => {
             // 如果含有顶层选择器，需要单独处理
             if (builtInRootSelectorRE.test($2)) {

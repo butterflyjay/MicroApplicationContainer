@@ -9,7 +9,7 @@ export default {
   input: "./src/index.ts",
   // preserveModules: true,
   output: {
-    file: path.resolve("examples", "src", "microweb.js"),
+    file: path.resolve("examples", "dist", "microweb.js"),
     format: "es",
     sourcemap: true
   },
