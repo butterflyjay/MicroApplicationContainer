@@ -1,8 +1,8 @@
 import CreateApp, { appInstanceMap } from "./app";
-import { UrlType } from "./types/types";
+import { MicroElementType, UrlType } from "./types/types";
 import { formatEntry } from "./utils";
 //自定义微元素组件
-export class MicroElement extends HTMLElement {
+export class MicroElement extends HTMLElement implements MicroElementType {
   public url: UrlType = { origin: "", pathname: "", search: "" };
   public appName: string = "";
   public appEntry: string = "";
@@ -52,14 +52,20 @@ export class MicroElement extends HTMLElement {
       formatEntry(newVal, this);
     }
   }
+  /**
+   * 首次挂载微应用
+   */
+  private handleConnected(): void {
+    if (!this.appName || !this.appEntry) return;
+  }
 }
 export function defineElement() {
   //如果已经定义过，则忽略
-  if (!window.customElements.get("micro-web")) {
+  if (!window.customElements.get("micro-element")) {
     /**
      * 注册元素
      * 注册后，就可以像普通元素一样使用micro-web，当micro-web元素被插入或删除DOM时即可触发相应的生命周期函数。
      */
-    window.customElements.define("micro-web", MicroElement);
+    window.customElements.define("micro-element", MicroElement);
   }
 }

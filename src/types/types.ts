@@ -42,9 +42,21 @@ export type AppSourceMapValue = {
   isExternal?: boolean;
 };
 
-export enum AppStatus {
-  CREATED = "CREATED",
-  MOUNTED = "MOUNTED",
-  UNMOUNT = "UNMOUNT",
-  LOADING = "LOADING",
+type ObservedAttr = "name" | "entry";
+
+type AttrType = string | null;
+
+//单个微应用元素类型
+export interface MicroElementType {
+  appName: AttrType;
+  appEntry: AttrType;
+
+  //元素挂载到document时的钩子
+  connectedCallback(): void;
+
+  //元素从document文档卸载时的钩子
+  disconnectedCallback(): void;
+
+  //元素属性改变时的钩子
+  attributeChangedCallback(attr: ObservedAttr, oldVal: string, newVal: string): void;
 }
