@@ -1,6 +1,7 @@
 import SandBox from "./sandbox";
 import loadHtml from "./source";
-import { AppSourceMap, AppStatus, CreateAppType, MicroApp, UrlType } from "./types/types";
+import { AppStatus } from "./types/constance";
+import { AppSourceMap, CreateAppType, MicroApp, UrlType } from "./types/types";
 export default class CreateApp {
   public url: UrlType;
   public sandBox: SandBox;
@@ -55,7 +56,7 @@ export default class CreateApp {
     this.source.scripts.forEach(info => {
       try {
         // (0, eval)(this.sandBox.bindScope(info.code));
-        (new Function(this.sandBox.bindScope(info.code)))()
+        new Function(this.sandBox.bindScope(info.code))();
       } catch (error) {
         console.error("微应用执行js代码错误!", error);
       }

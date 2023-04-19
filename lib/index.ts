@@ -1,11 +1,11 @@
 import { defineElement } from "./element";
+import logger from "./logger";
 import { isBrowser } from "./utils";
 
 const MicroWeb = {
-  start() {
+  start(): void {
     if (!isBrowser) {
-      console.error("The environment is not support MicroWeb!");
-      return;
+      return logger.error("The environment is not support MicroWeb!");
     }
     defineElement();
   },

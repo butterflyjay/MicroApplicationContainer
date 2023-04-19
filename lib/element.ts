@@ -1,22 +1,23 @@
 import CreateApp, { appInstanceMap } from "./app";
-import { MicroElementType, UrlType } from "./types/types";
+import logger from "./logger";
+import { MicroElementType, OptionsType, UrlType } from "./types/types";
 import { formatEntry } from "./utils";
 //自定义微元素组件
 export class MicroElement extends HTMLElement implements MicroElementType {
   public url: UrlType = { origin: "", pathname: "", search: "" };
   public appName: string = "";
   public appEntry: string = "";
-  static get observedAttributes() {
+  static get observedAttributes(): Array<string> {
     return ["name", "entry"];
   }
   constructor() {
     super();
+    logger.log("custom component is mounting in document", this.appName);
   }
   /**
    * 自定义元素被插入到DOM时执行，此时去加载子应用的静态资源并渲染
    */
   public connectedCallback() {
-    console.log("micro-app is connected");
     //创建微应用实例
     const app = new CreateApp({
       name: this.appName,
@@ -56,7 +57,38 @@ export class MicroElement extends HTMLElement implements MicroElementType {
    * 首次挂载微应用
    */
   private handleConnected(): void {
-    if (!this.appName || !this.appEntry) return;
+    if (!this.appName || !this.appEntry) {
+      return logger.warn("Mount failed, name and entry are required", this.appName);
+    }
+  }
+  /**
+   * 初始化shadowDom
+   */
+  private initShadowDom(): void {
+    this.attachShadow({ mode: "open" });
+  }
+  /**
+   * 获取配置
+   * 全局设置为最低优先级
+   * @param名称 配置项名称
+   */
+  private getDisposeResult<T extends keyof OptionsType>(name: T) {
+    return (this.compatibleProperties(name) || !!);
+  }
+  /**
+   * 判断属性是否存在于自定义标签上
+   * @param name 属性名
+   * @returns boolean
+   */
+  private compatibleProperties(name: string): boolean {
+    if (name === "disable-scopecss") {
+      return (
+        this.hasAttribute("disable-scopecss") || this.hasAttribute("disableScopecss")
+      );
+    } else if (name === "disable-sandbox") {
+      return this.hasAttribute("disable-sandbox") || this.hasAttribute("disableSandbox");
+    }
+    return this.hasAttribute(name);
   }
 }
 export function defineElement() {

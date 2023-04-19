@@ -60,3 +60,34 @@ export interface MicroElementType {
   //元素属性改变时的钩子
   attributeChangedCallback(attr: ObservedAttr, oldVal: string, newVal: string): void;
 }
+// 单个应用的配置
+export type MicroAppConfig = {
+  name: string;
+  entry: string;
+  shadowDom?: boolean; //是否使用shadowDom
+  scopecss?: boolean; // 是否禁用css作用域
+  useSandbox?: boolean; //是否禁用沙箱
+  baseRoute?: string; // 路由前缀
+};
+
+//全局配置
+export interface OptionsType extends MicroAppConfig {
+  tagName?: string;
+  lifeCycles?: LifeCyclesType;
+  globalAssets?: GlobalAssetsType;
+}
+
+//全局执行的js 和 css
+type GlobalAssetsType = {
+  js?: string[];
+  css?: string[];
+};
+
+//lifecycle类型
+export type LifeCyclesType = {
+  created(e: CustomEvent): void;
+  beforemount(e: CustomEvent): void;
+  mounted(e: CustomEvent): void;
+  unmount(e: CustomEvent): void;
+  error(e: CustomEvent): void;
+};
