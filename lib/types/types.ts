@@ -4,6 +4,8 @@
 //2.制作npm包时，书写自己的声明文件，需要在package.json的typing/types字段注册声明文件的路径；
 //3.不使用ts时，也可以添加声明文件与（自己的）的模块存放在同一目录下，简单做一下数据结构体，对IDE参数声明也有用哦；
 
+import SandBox from "../sandbox";
+
 export interface Window {
   proxyWindow?: object;
   addEventListener?(type: string, handler: Function, useCapture?: boolean): void;
@@ -15,18 +17,28 @@ export interface CreateAppType {
   container: Element;
   url: UrlType;
 }
-export interface AppSourceMap {
+
+//微应用实例
+export interface AppInterface {
+  source: SourceType; //app资源
+  sandBox: SandBox | null; //沙箱实例
+  name: string; //app name
+  entry: string; //app entry
+  useSandbox: boolean;
+  container: HTMLElement | ShadowRoot | null; //微前端容器dom
+}
+export type SourceType = {
   links: Map<string, AppSourceMapValue>;
   scripts: Map<string, AppSourceMapValue>;
   html: Element | null;
-}
+};
 export interface MicroApp {
   url: UrlType;
   name: string;
   entry: string;
   container: Element | null;
   status: string;
-  source: AppSourceMap;
+  source: SourceType;
   onLoad(dom: Element): void;
   unmount(isDestory: boolean): void;
 }
@@ -62,19 +74,19 @@ export interface MicroElementType {
 }
 // 单个应用的配置
 export type MicroAppConfig = {
-  name: string;
-  entry: string;
   shadowDom?: boolean; //是否使用shadowDom
-  scopecss?: boolean; // 是否禁用css作用域
-  useSandbox?: boolean; //是否禁用沙箱
+  disableScopecss?: boolean; // 禁用css作用域
+  disableSandbox?: boolean; // 禁用沙箱
   baseRoute?: string; // 路由前缀
+  destroy?: boolean; // 应用卸载后强制删除缓存资源
+  "keep-alive"?: boolean; //应用卸载后会缓存状态
 };
 
 //全局配置
 export interface OptionsType extends MicroAppConfig {
   tagName?: string;
-  lifeCycles?: LifeCyclesType;
-  globalAssets?: GlobalAssetsType;
+  lifeCycles?: LifeCyclesType; //生命周期
+  globalAssets?: GlobalAssetsType; //全局共享资源
 }
 
 //全局执行的js 和 css

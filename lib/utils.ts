@@ -21,6 +21,38 @@ export function fetchSource(entry: string): Promise<string> {
 export function isString(target: unknown): target is string {
   return typeof target === "string";
 }
+
+/**
+ * 判断是否为纯对象
+ * @param target 纯对象
+ * @returns {boolean}
+ */
+export function isPlainObject<T = Record<PropertyKey, unknown>>(
+  target: unknown
+): target is T {
+  return toString.call(target) === "[object Object]";
+}
+
+export function isObject(target: unknown): target is object {
+  return typeof target === "object";
+}
+/**
+ * 判断是否为函数类型
+ * @param target 函数
+ * @returns {boolean}
+ */
+export function isFunction(target: unknown): target is Function {
+  return typeof target === "function";
+}
+// is number
+export function isNumber(target: unknown): target is number {
+  return typeof target === "number";
+}
+//is Promise
+export function isPromise(target: unknown): target is Promise<unknown> {
+  return toString.call(target) === "[object Promise]";
+}
+
 export function formatAppEntry(
   entry: string | null,
   appName: string | null = null

@@ -73,7 +73,7 @@ export class MicroElement extends HTMLElement implements MicroElementType {
    * @param名称 配置项名称
    */
   private getDisposeResult<T extends keyof OptionsType>(name: T) {
-    return (this.compatibleProperties(name) || !!);
+    return (this.compatibleProperties(name));
   }
   /**
    * 判断属性是否存在于自定义标签上

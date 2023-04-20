@@ -1,7 +1,7 @@
 import SandBox from "./sandbox";
 import loadHtml from "./source";
 import { AppStatus } from "./types/constance";
-import { AppSourceMap, CreateAppType, MicroApp, UrlType } from "./types/types";
+import { SourceType, CreateAppType, MicroApp, UrlType } from "./types/types";
 export default class CreateApp {
   public url: UrlType;
   public sandBox: SandBox;
@@ -10,7 +10,7 @@ export default class CreateApp {
   public entry: string;
   public container: Element | null;
   public status: string = AppStatus.CREATED; // 组件状态，包括created/loading/mounted/unmount
-  public source: AppSourceMap = {
+  public source: SourceType = {
     links: new Map(), //link元素对应的静态资源
     scripts: new Map(), //script元素对应的静态资源
     html: null,

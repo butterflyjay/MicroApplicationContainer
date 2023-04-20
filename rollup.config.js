@@ -6,7 +6,7 @@ import postcss from "rollup-plugin-postcss";
 import path from "path";
 
 export default {
-  input: "./src/index.ts",
+  input: "./lib/index.ts",
   // preserveModules: true,
   output: {
     file: path.resolve("examples", "dist", "microweb.js"),
