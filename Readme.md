@@ -1,1 +1,1 @@
-微前端框架基座
+Micro-Frontend

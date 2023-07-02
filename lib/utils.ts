@@ -9,10 +9,11 @@ export const isBrowser = typeof window !== "undefined";
  * @returns
  */
 export function fetchSource(entry: string): Promise<string> {
-  return fetch(entry).then(res => {
+  return window.fetch(entry).then(res => {
     return res.text();
   });
 }
+
 /**
  * 判断目标是否为字符串
  * @param target 目标
@@ -77,16 +78,16 @@ export function createUrl(entry: string): URL {
   return new URL(entry);
 }
 
-export function formatEntry(entry: string, el: MicroElement): string {
-  if (!isString(entry) || !entry) return "";
-  try {
-    //origin: 包含协议名、域名和端口号 pathname：以"/"起头紧跟着URL文件路径 search：指示URL的参数字符串
-    const { origin, pathname, search } = createUrl(addProtocol(entry));
-    console.log(origin, pathname, search);
-    el.url = { origin, pathname, search };
-    return `${origin}${pathname}${search}`;
-  } catch (e) {
-    console.error(e, el.appName);
-    return "";
-  }
-}
+// export function formatEntry(entry: string, el: MicroElement): string {
+//   if (!isString(entry) || !entry) return "";
+//   try {
+//     //origin: 包含协议名、域名和端口号 pathname：以"/"起头紧跟着URL文件路径 search：指示URL的参数字符串
+//     const { origin, pathname, search } = createUrl(addProtocol(entry));
+//     console.log(origin, pathname, search);
+//     el.url = { origin, pathname, search };
+//     return `${origin}${pathname}${search}`;
+//   } catch (e) {
+//     console.error(e, el.appName);
+//     return "";
+//   }
+// }

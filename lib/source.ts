@@ -1,12 +1,12 @@
 import scopedCss from "./scopedcss";
-import { MicroApp } from "./types/types";
+import { AppInterface } from "./types/types";
 import { fetchSource } from "./utils";
 
 /**
  * 访问微应用资源
  * @param app 微应用实例对象
  */
-export default function loadHtml(app: MicroApp) {
+export default function loadHtml(app: AppInterface) {
   fetchSource(app.entry)
     .then(html => {
       html = html
@@ -23,23 +23,23 @@ export default function loadHtml(app: MicroApp) {
             .replace(/<\/body>/i, "</microweb-body>");
         });
       // 将html字符串转化为DOM结构
-      const htmlDom = document.createElement("div");
-      htmlDom.innerHTML = html;
+      const htmlTemplate = document.createElement("div");
+      htmlTemplate.innerHTML = html;
       // 进一步提取和处理js、css等静态资源
-      extractSourceDom(htmlDom, app);
+      extractSourceDom(htmlTemplate, app);
       //获取micro-app-head元素
-      const microWebHead = htmlDom.querySelector("microweb-head");
+      const microWebHead = htmlTemplate.querySelector("microweb-head");
       // 如果有远程css资源，则通过fetch请求
       if (app.source.links.size) {
-        fetchLinksFromHtml(app, microWebHead, htmlDom);
+        fetchLinksFromHtml(app, microWebHead, htmlTemplate);
       } else {
-        app.onLoad(htmlDom);
+        app.onLoad(htmlTemplate);
       }
       //如果有远程js资源，则通过fetch请求
       if (app.source.scripts.size) {
-        fetchScriptsFromHtml(app, htmlDom);
+        fetchScriptsFromHtml(app, htmlTemplate);
       } else {
-        app.onLoad(htmlDom);
+        app.onLoad(htmlTemplate);
       }
     })
     .catch(e => {
@@ -51,7 +51,7 @@ export default function loadHtml(app: MicroApp) {
  * @param { Element } parent 父元素
  * @param { MicroApp } app 应用实例
  */
-export function extractSourceDom(parent: Element, app: MicroApp) {
+export function extractSourceDom(parent: Element, app: AppInterface) {
   const children = Array.from(parent.children); //Element.children是类数组对象，没有数组特有的方法
   //递归每一个子元素
   children.length &&
@@ -97,18 +97,18 @@ export function extractSourceDom(parent: Element, app: MicroApp) {
  * 获取link远程资源
  * @param app 微应用实例
  * @param microWebHead microweb-head
- * @param htmlDom 微应用
+ * @param htmlTemplate 微应用
  */
 export function fetchLinksFromHtml(
-  app: MicroApp,
+  app: AppInterface,
   microWebHead: Element | null,
-  htmlDom: Element
+  htmlTemplate: Element
 ): void {
   const linkEntries = Array.from(app.source.links.entries());
   //通过fetch请求所有css资源
   const fetchLinkPromise: Array<Promise<string>> = [];
   for (const [url] of linkEntries) {
-    fetchLinkPromise.push(fetchSource(app.url.origin + url));
+    fetchLinkPromise.push(fetchSource(app.entry));
   }
   Promise.all(fetchLinkPromise)
     .then(res => {
@@ -123,7 +123,7 @@ export function fetchLinksFromHtml(
         linkEntries[i][1].code = code;
       }
       //处理完成后执行onLoad方法
-      app.onLoad(htmlDom);
+      app.onLoad(htmlTemplate);
     })
     .catch(e => {
       console.error("加载css出错", e);
@@ -132,16 +132,16 @@ export function fetchLinksFromHtml(
 /**
  * 获取js远程资源
  * @param app 微应用实例
- * @param htmlDom 微应用dom结构
+ * @param htmlTemplate 微应用dom结构
  */
-export function fetchScriptsFromHtml(app: MicroApp, htmlDom: Element): void {
+export function fetchScriptsFromHtml(app: AppInterface, htmlTemplate: Element): void {
   const scriptEntries = Array.from(app.source.scripts.entries());
   //通过fetch请求所有js资源
   const fetchScriptPromise: Array<Promise<string>> = [];
   for (const [url, info] of scriptEntries) {
     //如果是内联script，则不需要请求资源
     fetchScriptPromise.push(
-      info.isExternal ? fetchSource(app.url.origin + url) : Promise.resolve(info.code)
+      info.isExternal ? fetchSource(app.entry) : Promise.resolve(info.code)
     );
   }
   Promise.all(fetchScriptPromise)
@@ -151,7 +151,7 @@ export function fetchScriptsFromHtml(app: MicroApp, htmlDom: Element): void {
         //将代码放入缓存，再次渲染时可以从缓存中获取
         scriptEntries[i][1].code = code;
       }
-      app.onLoad(htmlDom);
+      app.onLoad(htmlTemplate);
     })
     .catch(e => {
       console.error("加载js出错", e);

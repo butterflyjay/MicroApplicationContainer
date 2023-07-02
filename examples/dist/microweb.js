@@ -450,18 +450,26 @@ function fetchScriptsFromHtml(app, htmlDom) {
     });
 }
 
-//TypeScript声明文件(.d.ts)的使用
-//使用场景
-//1.在ts文件中对引用的外部库做类型判断；
-//2.制作npm包时，书写自己的声明文件，需要在package.json的typing/types字段注册声明文件的路径；
-//3.不使用ts时，也可以添加声明文件与（自己的）的模块存放在同一目录下，简单做一下数据结构体，对IDE参数声明也有用哦；
+//app 状态
 var AppStatus;
 (function (AppStatus) {
-    AppStatus["CREATED"] = "CREATED";
-    AppStatus["MOUNTED"] = "MOUNTED";
+    AppStatus["CREATED"] = "created";
+    AppStatus["LOADING"] = "loading";
+    AppStatus["LOADED"] = "loaded";
+    AppStatus["LOAD_FAILED"] = "load_failed";
+    AppStatus["MOUNTING"] = "mounting";
+    AppStatus["MOUNTED"] = "mounted";
     AppStatus["UNMOUNT"] = "UNMOUNT";
-    AppStatus["LOADING"] = "LOADING";
 })(AppStatus || (AppStatus = {}));
+//lifecycle 常量
+var LifeCycles;
+(function (LifeCycles) {
+    LifeCycles["CREATED"] = "created";
+    LifeCycles["BEFOREMOUNT"] = "beforemount";
+    LifeCycles["MOUNTED"] = "mounted";
+    LifeCycles["UNMOUNT"] = "unmount";
+    LifeCycles["ERROR"] = "error";
+})(LifeCycles || (LifeCycles = {}));
 
 class CreateApp {
     constructor({ name, entry, container, url }) {
@@ -512,7 +520,7 @@ class CreateApp {
         this.source.scripts.forEach(info => {
             try {
                 // (0, eval)(this.sandBox.bindScope(info.code));
-                (new Function(this.sandBox.bindScope(info.code)))();
+                new Function(this.sandBox.bindScope(info.code))();
             }
             catch (error) {
                 console.error("微应用执行js代码错误!", error);
@@ -540,6 +548,29 @@ class CreateApp {
 }
 const appInstanceMap = new Map();
 
+//可开闭式logger
+class Logger {
+    constructor({ isShowLogger }) {
+        this.isShowLogger = isShowLogger;
+    }
+    log(msg, appName = null, ...args) {
+        if (this.isShowLogger) {
+            console.log(`[Micro Web--${appName ? "app" : ""} ${appName}]: `, msg, ...args);
+        }
+    }
+    warn(msg, appName = null, ...args) {
+        if (this.isShowLogger) {
+            console.warn(`[Micro Web--${appName ? "app" : ""} ${appName}]: `, msg, ...args);
+        }
+    }
+    error(msg, appName = null, ...args) {
+        if (this.isShowLogger) {
+            console.error(`[Micro Web--${appName ? "app" : ""} ${appName}]: `, msg, ...args);
+        }
+    }
+}
+var logger = new Logger({ isShowLogger: true });
+
 //自定义微元素组件
 class MicroElement extends HTMLElement {
     static get observedAttributes() {
@@ -550,12 +581,12 @@ class MicroElement extends HTMLElement {
         this.url = { origin: "", pathname: "", search: "" };
         this.appName = "";
         this.appEntry = "";
+        logger.log("custom component is mounting in document", this.appName);
     }
     /**
      * 自定义元素被插入到DOM时执行，此时去加载子应用的静态资源并渲染
      */
     connectedCallback() {
-        console.log("micro-app is connected");
         //创建微应用实例
         const app = new CreateApp({
             name: this.appName,
@@ -592,27 +623,73 @@ class MicroElement extends HTMLElement {
             formatEntry(newVal, this);
         }
     }
+    /**
+     * 首次挂载微应用
+     */
+    handleConnected() {
+        if (!this.appName || !this.appEntry) {
+            return logger.warn("Mount failed, name and entry are required", this.appName);
+        }
+    }
+    /**
+     * 初始化shadowDom
+     */
+    initShadowDom() {
+        this.attachShadow({ mode: "open" });
+    }
+    /**
+     * 获取配置
+     * 全局设置为最低优先级
+     * @param名称 配置项名称
+     */
+    getDisposeResult(name) {
+        return (this.compatibleProperties(name));
+    }
+    /**
+     * 判断属性是否存在于自定义标签上
+     * @param name 属性名
+     * @returns boolean
+     */
+    compatibleProperties(name) {
+        if (name === "disable-scopecss") {
+            return (this.hasAttribute("disable-scopecss") || this.hasAttribute("disableScopecss"));
+        }
+        else if (name === "disable-sandbox") {
+            return this.hasAttribute("disable-sandbox") || this.hasAttribute("disableSandbox");
+        }
+        return this.hasAttribute(name);
+    }
 }
 function defineElement() {
     //如果已经定义过，则忽略
-    if (!window.customElements.get("micro-web")) {
+    if (!window.customElements.get("micro-element")) {
         /**
          * 注册元素
          * 注册后，就可以像普通元素一样使用micro-web，当micro-web元素被插入或删除DOM时即可触发相应的生命周期函数。
          */
-        window.customElements.define("micro-web", MicroElement);
+        window.customElements.define("micro-element", MicroElement);
     }
 }
 
-const MicroWeb = {
-    start() {
-        if (!isBrowser) {
-            console.error("The environment is not support MicroWeb!");
-            return;
+class MicroWeb {
+    constructor() {
+        this.options = Object.create(null);
+    }
+    start(options = {
+        shadowDom: false,
+        disableSandbox: false,
+        disableScopecss: false,
+        destroy: false,
+        "keep-alive": false,
+    }) {
+        Object.assign(this.options, options);
+        if (!isBrowser || !window.customElements) {
+            return logger.error("The environment is not support MicroWeb.");
         }
         defineElement();
-    },
-};
+    }
+}
+const microWeb = new MicroWeb();
 
-export { MicroWeb as default };
+export { MicroWeb, microWeb as default, microWeb };
 //# sourceMappingURL=microweb.js.map

@@ -11,34 +11,19 @@ export interface Window {
   addEventListener?(type: string, handler: Function, useCapture?: boolean): void;
   removeEventListener?(type: string, handler: Function, useCapture?: boolean): void;
 }
-export interface CreateAppType {
-  name: string;
-  entry: string;
-  container: Element;
-  url: UrlType;
-}
 
-//微应用实例
-export interface AppInterface {
-  source: SourceType; //app资源
-  sandBox: SandBox | null; //沙箱实例
-  name: string; //app name
-  entry: string; //app entry
-  useSandbox: boolean;
-  container: HTMLElement | ShadowRoot | null; //微前端容器dom
-}
 export type SourceType = {
   links: Map<string, AppSourceMapValue>;
   scripts: Map<string, AppSourceMapValue>;
   html: Element | null;
 };
-export interface MicroApp {
-  url: UrlType;
+export interface AppInterface {
   name: string;
   entry: string;
-  container: Element | null;
-  status: string;
+  container?: Element | ShadowRoot;
+  status?: string;
   source: SourceType;
+  sandBox: SandBox | null;
   onLoad(dom: Element): void;
   unmount(isDestory: boolean): void;
 }
@@ -72,8 +57,17 @@ export interface MicroElementType {
   //元素属性改变时的钩子
   attributeChangedCallback(attr: ObservedAttr, oldVal: string, newVal: string): void;
 }
+export type CreateAppParam = {
+  name: string;
+  entry: string;
+  disableScopecss?: boolean;
+  disableSandbox?: boolean;
+  container?: HTMLElement | ShadowRoot;
+};
 // 单个应用的配置
 export type MicroAppConfig = {
+  name: string; // name: app name
+  entry: string; // entry: app entry
   shadowDom?: boolean; //是否使用shadowDom
   disableScopecss?: boolean; // 禁用css作用域
   disableSandbox?: boolean; // 禁用沙箱
@@ -94,7 +88,7 @@ type GlobalAssetsType = {
   js?: string[];
   css?: string[];
 };
-
+export type LifecycleEventName = keyof LifeCyclesType;
 //lifecycle类型
 export type LifeCyclesType = {
   created(e: CustomEvent): void;

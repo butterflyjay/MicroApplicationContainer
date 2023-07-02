@@ -1,29 +1,37 @@
 import SandBox from "./sandbox";
 import loadHtml from "./source";
 import { AppStatus } from "./types/constance";
-import { SourceType, CreateAppType, MicroApp, UrlType } from "./types/types";
-export default class CreateApp {
-  public url: UrlType;
+import { SourceType, CreateAppParam, AppInterface } from "./types/types";
+export default class CreateApp implements AppInterface {
   public sandBox: SandBox;
   public loadCount: number = 0;
   public name: string;
   public entry: string;
-  public container: Element | null;
-  public status: string = AppStatus.CREATED; // 组件状态，包括created/loading/mounted/unmount
+  public container?: Element | ShadowRoot;
+  public disableScopecss?: boolean;
+  public disableSandbox?: boolean;
+  public status: string = AppStatus.LOADED; // 组件状态，包括created/loading/mounted/unmount
   public source: SourceType = {
     links: new Map(), //link元素对应的静态资源
     scripts: new Map(), //script元素对应的静态资源
     html: null,
   };
 
-  constructor({ name, entry, container, url }: CreateAppType) {
+  constructor({
+    name,
+    entry,
+    container,
+    disableSandbox,
+    disableScopecss,
+  }: CreateAppParam) {
     this.name = name; // 应用名称
     this.entry = entry; // 应用地址
     this.container = container; //应用容器
-    this.status = AppStatus.LOADING;
-    this.url = url;
-    loadHtml(this);
+    this.disableSandbox = disableSandbox;
+    this.disableScopecss = disableScopecss;
+    this.status = AppStatus.CREATED;
     this.sandBox = new SandBox(name);
+    loadHtml(this);
   }
   /**
    * 资源加载完时执行
@@ -72,7 +80,7 @@ export default class CreateApp {
     //更新状态
     this.status = AppStatus.UNMOUNT;
     //清空容器
-    this.container = null;
+    this.container = void 0;
     //关闭沙箱
     this.sandBox.inActive();
     //destory为true，则删除应用
@@ -81,4 +89,4 @@ export default class CreateApp {
     }
   }
 }
-export const appInstanceMap: Map<string, MicroApp> = new Map();
+export const appInstanceMap: Map<string, AppInterface> = new Map();

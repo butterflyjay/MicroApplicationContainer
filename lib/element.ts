@@ -1,32 +1,38 @@
 import CreateApp, { appInstanceMap } from "./app";
 import logger from "./logger";
-import { MicroElementType, OptionsType, UrlType } from "./types/types";
-import { formatEntry } from "./utils";
+import { LifeCycles } from "./types/constance";
+import {
+  LifecycleEventName,
+  MicroElementType,
+  OptionsType,
+  UrlType,
+} from "./types/types";
+// import { formatEntry } from "./utils";
 //自定义微元素组件
 export class MicroElement extends HTMLElement implements MicroElementType {
-  public url: UrlType = { origin: "", pathname: "", search: "" };
-  public appName: string = "";
-  public appEntry: string = "";
+  public appName: string = ""; //app name
+  public appEntry: string = ""; //app entry
+  public options: OptionsType = {
+    name: this.appName,
+    entry: this.appEntry,
+    shadowDom: true,
+  }; //全局options
   static get observedAttributes(): Array<string> {
     return ["name", "entry"];
   }
   constructor() {
     super();
-    logger.log("custom component is mounting in document", this.appName);
+    logger.log("Creating component elements", this.appName);
   }
   /**
    * 自定义元素被插入到DOM时执行，此时去加载子应用的静态资源并渲染
    */
   public connectedCallback() {
-    //创建微应用实例
-    const app = new CreateApp({
-      name: this.appName,
-      entry: this.appEntry,
-      container: this,
-      url: this.url,
-    });
-    //记入缓存，用于后续功能
-    appInstanceMap.set(this.appName, app);
+    logger.log("The component is already mounted in the document");
+    const isAppEffective: boolean = !!(this.appName && this.appEntry);
+    dispatchLifecyclesEvent(this, LifeCycles.CREATED);
+
+    isAppEffective && this.handleConnected();
   }
   /**
    * 自定义元素从DOM中删除时执行，此时进行一些卸载操作
@@ -50,7 +56,6 @@ export class MicroElement extends HTMLElement implements MicroElementType {
       this.appName = newVal;
     } else if (attr === "entry" && !this.appEntry && newVal) {
       this.appEntry = newVal;
-      formatEntry(newVal, this);
     }
   }
   /**
@@ -58,8 +63,36 @@ export class MicroElement extends HTMLElement implements MicroElementType {
    */
   private handleConnected(): void {
     if (!this.appName || !this.appEntry) {
-      return logger.warn("Mount failed, name and entry are required", this.appName);
+      return logger.warn(
+        "Mount failed, app name and app entry are required",
+        this.appName
+      );
     }
+    //初始化shadowDom
+    this.initShadowDom();
+    //创建App
+    const appAlreadyCreated = appInstanceMap.has(this.appName);
+    if (appAlreadyCreated) {
+      return;
+    }
+    this.handleCreateApp();
+  }
+  /**
+   * 创建App实例
+   */
+  private handleCreateApp(): void {
+    //TODO: 卸载app并删除实例
+    const app = appInstanceMap.get(this.appName);
+    if (app) {
+    }
+    const newApp = new CreateApp({
+      name: this.appName,
+      entry: this.appEntry,
+      container: this.shadowRoot ?? this,
+      disableScopecss: true,
+      disableSandbox: false,
+    });
+    appInstanceMap.set(newApp.name, newApp);
   }
   /**
    * 初始化shadowDom
@@ -73,7 +106,7 @@ export class MicroElement extends HTMLElement implements MicroElementType {
    * @param名称 配置项名称
    */
   private getDisposeResult<T extends keyof OptionsType>(name: T) {
-    return (this.compatibleProperties(name));
+    return this.compatibleProperties(name);
   }
   /**
    * 判断属性是否存在于自定义标签上
@@ -91,6 +124,7 @@ export class MicroElement extends HTMLElement implements MicroElementType {
     return this.hasAttribute(name);
   }
 }
+
 export function defineElement() {
   //如果已经定义过，则忽略
   if (!window.customElements.get("micro-element")) {
@@ -100,4 +134,11 @@ export function defineElement() {
      */
     window.customElements.define("micro-element", MicroElement);
   }
+}
+
+export function dispatchLifecyclesEvent(
+  element: HTMLElement | ShadowRoot,
+  lifecycleName: LifecycleEventName
+) {
+  logger.log(`触发生命周期事件: ` + lifecycleName);
 }
