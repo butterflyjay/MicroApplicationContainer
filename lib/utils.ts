@@ -91,3 +91,18 @@ export function createUrl(entry: string): URL {
 //     return "";
 //   }
 // }
+
+let currentMicroWebName: string | null = null;
+export function setCurrentAppName(appName: string | null): void {
+  currentMicroWebName = appName;
+}
+export function getCurrentAppName(): string | null {
+  return currentMicroWebName;
+}
+
+export function CompletionPath(path: string, baseURL: string): string {
+  if (!path || /^((((ht|f)tps?)|file):)?\/\//.test(path) || /^(data|blob):/.test(path)) {
+    return path;
+  }
+  return baseURL + path;
+}
