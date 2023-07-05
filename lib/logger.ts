@@ -1,24 +1,24 @@
-import { isString } from "./utils";
-
-//可开闭式logger
+type LoggerParam = {
+  isShowLogger: boolean;
+};
 class Logger {
   public isShowLogger: boolean;
-  constructor({ isShowLogger }: { isShowLogger: boolean }) {
+  constructor({ isShowLogger }: LoggerParam) {
     this.isShowLogger = isShowLogger;
   }
-  public log(msg: unknown, appName: string | null = null, ...args: unknown[]): void {
+  public log(msg: unknown, appName?: string): void {
     if (this.isShowLogger) {
-      console.log(`[Micro Web--${appName ? "app" : ""} ${appName}]: `, msg, ...args);
+      console.log(`[Micro Web--${appName ? appName : ""}]: `, msg);
     }
   }
-  public warn(msg: unknown, appName: string | null = null, ...args: unknown[]): void {
+  public warn(msg: unknown, appName?: string): void {
     if (this.isShowLogger) {
-      console.warn(`[Micro Web--${appName ? "app" : ""} ${appName}]: `, msg, ...args);
+      console.warn(`[Micro Web--${appName ? appName : ""}]: `, msg);
     }
   }
-  public error(msg: unknown, appName: string | null = null, ...args: unknown[]): void {
+  public error(msg: unknown, appName?: string): void {
     if (this.isShowLogger) {
-      console.error(`[Micro Web--${appName ? "app" : ""} ${appName}]: `, msg, ...args);
+      console.error(`[Micro Web--${appName ? appName : ""}]: `, msg);
     }
   }
 }
