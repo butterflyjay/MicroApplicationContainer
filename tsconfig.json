@@ -1,13 +1,15 @@
 {
   "include": ["./lib/**/*"], //指定需要编译文件，否则默认当前目录下除了exclude之外的所有.ts,.d.ts,.tsx文件
-  "exclude": [], //不编译某些文件
+  "exclude": [""], //不编译某些文件
   "compilerOptions": {
-    "target": "es2015", //指定ECMAScript目标版本："ES3"(default),"ES5","ES2015","ES2016"..."ESNEXT"
+    "target": "ESNext", //指定ECMAScript目标版本："ES3"(default),"ES5","ES2015","ES2016"..."ESNEXT"
     "module": "ES6", //指定使用模块: 'commonjs', 'amd', 'system', 'umd' or 'es2015'
     "esModuleInterop": true,
     "sourceMap": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "noImplicitThis": false,
+    "lib": ["DOM", "ES6"]
   }
 }
