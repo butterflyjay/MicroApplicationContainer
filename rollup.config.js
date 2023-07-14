@@ -15,7 +15,7 @@ export default defineConfig({
   input: "./lib/index.ts",
   // preserveModules: true,
   output: {
-    file: path.resolve("examples", "dist", "microweb.js"),
+    file: path.resolve("examples", "dist", "micro-frontend.js"),
     format: "es",
     sourcemap: true
   },
