@@ -1,10 +1,10 @@
-// import "./main.css";
+import "./main.css";
 // import "../static/css/nodomui.css";
 import { nodom, Module } from "./static/js/nodomui.js";
 import { initRoute } from "./router/routeConfig.js";
-import microWeb from "../../dist/microweb.js";
+import microFrontend from "../../dist/micro-frontend.js";
 
-microWeb.start();
+microFrontend.start();
 
 class Main extends Module {
   template() {
