@@ -133,7 +133,10 @@ export const {
   assign,
   keys,
   getOwnPropertyDescriptor,
+  getPrototypeOf,
 } = Object;
+
+export const createElement = Document[PROTOTYPE].createElement;
 
 export const {
   //EventTarget
@@ -150,6 +153,7 @@ export const {
   after,
   before,
   replaceWith,
+  setAttribute,
 } = HTMLElement[PROTOTYPE];
 
 export function addEventListenerTo(
