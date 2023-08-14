@@ -99,7 +99,11 @@ export class MicroElement extends HTMLElement implements MicroAppElement {
   private initOptions(): void {
     const { attributes } = this;
     const option: { [propName: string]: unknown } = {
-      initialUrl: globalEnv.rawWindow.location.href,
+      initialUrl:
+        globalEnv.rawWindow.location.href +
+        (globalEnv.rawWindow.location.href.endsWith("/")
+          ? ""
+          : "/"),
       initialState: history.state,
     };
     for (let i = attributes.length - 1; i >= 0; --i) {
@@ -114,10 +118,12 @@ export class MicroElement extends HTMLElement implements MicroAppElement {
     assign(this.options, option);
   }
   private initRoute() {
-    let pathnameList = globalEnv.rawWindow.location.pathname.split("/");
-    let route = pathnameList[pathnameList.length - 1];
+    let route = globalEnv.rawWindow.location.pathname;
     if (route[0] !== "^") {
-      route = "^/" + route + "/";
+      route = "^" + route;
+    }
+    if (!route.endsWith("/")) {
+      route += "/";
     }
     this.options["route"] = new RegExp(route);
   }

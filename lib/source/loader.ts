@@ -75,17 +75,13 @@ export default function initShadowDom(app: AppInterface, htmlStr: string) {
   Array.from(externalHtmlEl.childNodes).forEach(node => {
     fragment.appendChild(node);
   });
-  contentWindow?.history.replaceState(
-    app.initialState,
-    "",
-    app.initialUrl + app.initialUrl.endsWith("/") ? "" : "/"
-  );
+  contentWindow?.history.replaceState(app.initialState, "", app.initialUrl);
   syncUrlToRawWindow(contentWindow!, app);
   hijackEventAttr([externalHtmlEl], app.container!, contentWindow!);
   hijackNodeMethodsOfIframe(contentWindow as Window);
   requestAnimationFrame(() => {
     appendChildTo(app.container?.document!, fragment);
-    appendTo(internalHtmlEl!, ...scriptsList[0]);   //iframe.contentDocument.documentElement
+    appendTo(internalHtmlEl!, ...scriptsList[0]); //iframe.contentDocument.documentElement
     appendTo(app.container?.document?.querySelector("head")!, ...stylesList);
   });
 }

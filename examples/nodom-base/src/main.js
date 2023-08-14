@@ -11,7 +11,7 @@ class Main extends Module {
     return `
       <div class="ui-layout">
         <div class="ui-layout-north">
-          微前端框架基座应用
+          MainApp
         </div>
         <div class="ui-layout-body">
           <div class="ui-layout-west">
